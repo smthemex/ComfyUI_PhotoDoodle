@@ -54,18 +54,17 @@ class PhotoDoodle_Loader:
             pre_lora_path = folder_paths.get_full_path("loras", pre_lora)
         else:
             raise ValueError("No model selected")
-        
-        if flux_unet != "none":
-            flux_transformer_path = folder_paths.get_full_path("diffusion_models", flux_unet)
-        else:
-            raise ValueError("No model selected")
-        
+    
         if loras != "none":
             lora_path = folder_paths.get_full_path("loras", loras)
         else:
             raise ValueError("No model selected")
         need_clip=False
         if  not flux_repo:
+            if flux_unet != "none":
+                flux_transformer_path = folder_paths.get_full_path("diffusion_models", flux_unet)
+            else:
+                raise ValueError("No model selected")
             if vae != "none":
                 vae_path = folder_paths.get_full_path("vae", vae)
                 vae_config=os.path.join(flux_repo_local, 'vae')
