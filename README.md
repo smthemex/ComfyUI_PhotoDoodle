@@ -29,8 +29,12 @@ pip install -r requirements.txt
 ```
 
 # 4 Example
+* if use single files  #flux1-dev-fp8.safetensors 16G 单体16G模型，内置clip和vae那种
 ![](https://github.com/smthemex/ComfyUI_PhotoDoodle/blob/main/assets/example.png)
-
+* if use unet #11G 单体unet模型，没有内置clip和vae的，所以必须要连双clip和选vae
+![](https://github.com/smthemex/ComfyUI_PhotoDoodle/blob/main/assets/example_c.png)
+* if use repo 'black-forest-labs/FLUX.1-dev' or C:/youpath/black-forest-labs/FLUX.1-dev  如果使用repo可以用自动下载或本地
+![](https://github.com/smthemex/ComfyUI_PhotoDoodle/blob/main/assets/example_b.png)
 
 # 5. Acknowledgments  
 
