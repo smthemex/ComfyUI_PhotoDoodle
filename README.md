@@ -29,7 +29,7 @@ pip install -r requirements.txt
 ```
 
 # 4 Example
-* if use single files  #flux1-dev-fp8.safetensors 16G 单体16G模型，内置clip和vae那种
+* if use single files，vae must choice "none"  #flux1-dev-fp8.safetensors 16G 单体16G模型，内置clip和vae那种，vae必须选择"none"
 ![](https://github.com/smthemex/ComfyUI_PhotoDoodle/blob/main/assets/example.png)
 * if use unet #11G 单体unet模型，没有内置clip和vae的，所以必须要连双clip和选vae
 ![](https://github.com/smthemex/ComfyUI_PhotoDoodle/blob/main/assets/example_c.png)
