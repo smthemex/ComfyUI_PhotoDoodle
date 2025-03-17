@@ -35,7 +35,7 @@ class PhotoDoodle_Loader:
                 "loras": (["none"] + folder_paths.get_filename_list("loras"),),
                 "flux_repo":("STRING", {"default": "", "multiline": False}),
                 "use_mmgp":("BOOLEAN",{"default":False}),
-                "profile_number":([0,1,2,3,4,5],)
+                "profile_number":([1,2,3,4,5],)
             },
         }
 
