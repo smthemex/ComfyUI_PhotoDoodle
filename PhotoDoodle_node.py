@@ -3,8 +3,9 @@
 import os
 import torch
 import numpy as np
+from safetensors.torch import load_file
 from diffusers import AutoencoderKL,FluxTransformer2DModel
-
+from diffusers import BitsAndBytesConfig as DiffusersBitsAndBytesConfig
 from .node_utils import tensor2pil_list, load_images,cleanup
 from .src.pipeline_pe_clone import FluxPipeline
 from .src.pipeline_pe_clone_orgin import FluxPipeline as FluxPipeline_orgin
@@ -69,11 +70,13 @@ class PhotoDoodle_Loader:
                 vae_path = folder_paths.get_full_path("vae", vae)
                 vae_config=os.path.join(flux_repo_local, 'vae')
                 ae = AutoencoderKL.from_single_file(vae_path,config=vae_config, torch_dtype=torch.bfloat16)
-                transformer = FluxTransformer2DModel.from_single_file(
-                    flux_transformer_path,
-                    config=os.path.join(flux_repo_local, "transformer"),
-                    torch_dtype=torch.bfloat16,
-                    )
+                config_file = os.path.join(flux_repo_local,"transformer/config.json")
+                t_state_dict=load_file(flux_transformer_path)
+                unet_config = FluxTransformer2DModel.load_config(config_file)
+                transformer = FluxTransformer2DModel.from_config(unet_config).to(torch.bfloat16)
+                transformer.load_state_dict(t_state_dict, strict=False)
+                del t_state_dict
+                cleanup()
                 pipeline = FluxPipeline.from_pretrained(
                     flux_repo_local,
                     vae=ae,
@@ -90,9 +93,17 @@ class PhotoDoodle_Loader:
             
         else:
             # flux_repo='F:/test/ComfyUI/models/diffusers/black-forest-labs/FLUX.1-dev'
-            pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,torch_dtype=torch.bfloat16,)
+            transformer_4bit = FluxTransformer2DModel.from_pretrained(
+                flux_repo,
+                subfolder="transformer",
+                quantization_config=DiffusersBitsAndBytesConfig(
+                    load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16
+                ),
+                torch_dtype=torch.bfloat16,)
+            pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,transformer=transformer_4bit,torch_dtype=torch.bfloat16,)
 
         # Load and fuse base LoRA weights
+        print("***********  Load and fuse base LoRA weights ***********")
         pipeline.load_lora_weights(lora_path)
         pipeline.fuse_lora()
         pipeline.unload_lora_weights()
@@ -108,6 +119,7 @@ class PhotoDoodle_Loader:
             pipe = {"transformer": pipeline, }
             # offloadobj.profile(pipe, quantizeTransformer = False,  profile_no = 1 ) # uncomment this line and comment the previous one if you have 24 GB of VRAM and wants faster generation  
             offloadobj.profile(pipe, quantizeTransformer = False,  extraModelsToQuantize = [], profile_no = profile_number, ) 
+            del pipe
         return ({"pipeline":pipeline,"need_clip":need_clip},)
 
 
@@ -147,10 +159,19 @@ class PhotoDoodle_Sampler:
         if need_clip:
             if clip is None:
                 raise ValueError("No clip selected")
-            prompt_embeds,pooled_prompt_embeds=clip.encode_from_tokens( clip.tokenize(prompt,return_word_ids=True),return_pooled=True)
+            # fix pooled of comfyclip
+            tokens = clip.tokenize(prompt)
+            tokens["t5xxl"] = clip.tokenize(prompt)["t5xxl"]
+            prompt_embeds = clip.encode_from_tokens(tokens, return_pooled=True, return_dict=True).pop("cond")
+            tokens["l"] = clip.tokenize(prompt)["l"]
+            pooled_prompt_embeds = clip.encode_from_tokens(tokens,  return_dict=True).pop("pooled_output")
+            #prompt_embeds,pooled_prompt_embeds=clip.encode_from_tokens( clip.tokenize(prompt,return_word_ids=True),return_pooled=True)
+            #print(prompt_embeds.shape,pooled_prompt_embeds.shape)
             prompt_embeds=prompt_embeds.to(device,torch.bfloat16)
             pooled_prompt_embeds=pooled_prompt_embeds.to(device,torch.bfloat16)
             prompt=None
+            del clip
+
         else:
             prompt_embeds,pooled_prompt_embeds=None,None
 
