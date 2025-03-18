@@ -34,6 +34,7 @@ class PhotoDoodle_Loader:
                 "pre_lora": (["none"] + [i for i in folder_paths.get_filename_list("loras") if "pre" in i],),
                 "loras": (["none"] + folder_paths.get_filename_list("loras"),),
                 "flux_repo":("STRING", {"default": "", "multiline": False}),
+                "quantization":(["none","fp8","nf4"],),
                 "use_mmgp":("BOOLEAN",{"default":False}),
                 "profile_number":([1,2,3,4,5],)
             },
@@ -45,7 +46,7 @@ class PhotoDoodle_Loader:
     CATEGORY = "PhotoDoodle"
 
     
-    def loader_main(self,flux_unet,vae,pre_lora,loras,flux_repo,use_mmgp,profile_number):
+    def loader_main(self,flux_unet,vae,pre_lora,loras,flux_repo,quantization,use_mmgp,profile_number):
        
         flux_repo_local=os.path.join(current_node_path, 'src/FLUX.1-dev')   
         print("***********Load model ***********")
@@ -93,14 +94,25 @@ class PhotoDoodle_Loader:
             
         else:
             # flux_repo='F:/test/ComfyUI/models/diffusers/black-forest-labs/FLUX.1-dev'
-            transformer_4bit = FluxTransformer2DModel.from_pretrained(
-                flux_repo,
-                subfolder="transformer",
-                quantization_config=DiffusersBitsAndBytesConfig(
-                    load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16
-                ),
-                torch_dtype=torch.bfloat16,)
-            pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,transformer=transformer_4bit,torch_dtype=torch.bfloat16,)
+            if quantization=="none":
+                pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,torch_dtype=torch.bfloat16,)
+            else:
+                if quantization=="fp8":
+                    transformer = FluxTransformer2DModel.from_pretrained(
+                        flux_repo,
+                        subfolder="transformer",
+                        quantization_config=DiffusersBitsAndBytesConfig(load_in_8bit=True,),
+                        torch_dtype=torch.bfloat16,
+                    )
+                else: #nf4
+                    transformer = FluxTransformer2DModel.from_pretrained(
+                        flux_repo,
+                        subfolder="transformer",
+                        quantization_config=DiffusersBitsAndBytesConfig(
+                            load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16
+                        ),
+                        torch_dtype=torch.bfloat16,)
+                pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,transformer=transformer,torch_dtype=torch.bfloat16,)
 
         # Load and fuse base LoRA weights
         print("***********  Load and fuse base LoRA weights ***********")
