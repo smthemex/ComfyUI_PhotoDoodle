@@ -2,7 +2,7 @@
 [PhotoDoodle](https://github.com/showlab/PhotoDoodle) it a method about 'Learning Artistic Image Editing from Few-Shot Pairwise Data'，you can use it in comfyUI
 
 # Update
-*  if use repo default use nf4 ,fast,and only 12G VRAM ,and not use mmgp,repo模式默认开启nf4量化，得益于新版的diffuser ，可以在不开启mmgp的情况下，轻松使用
+*  add fp8 nf4 transformer and T5 quantinaze chocie，add seed,增加量化菜单，和T5量化选项，用于repo模式，增加seed。
 
 # 1.Installation  
 -----
@@ -33,7 +33,7 @@ pip install -r requirements.txt
 
 # 4 Example
 * if use single files，vae must choice "none"  #flux1-dev-fp8.safetensors 16G 单体16G模型，内置clip和vae那种，vae必须选择"none"，不开启mmgp，次要推荐使用
-![](https://github.com/smthemex/ComfyUI_PhotoDoodle/blob/main/assets/example.png)
+![](https://github.com/smthemex/ComfyUI_PhotoDoodle/blob/main/assets/example0320.png)
 * if use repo 'black-forest-labs/FLUX.1-dev' or C:/youpath/black-forest-labs/FLUX.1-dev  如果使用repo可以用自动下载或本地,不开启mmgp，第一推荐使用
 ![](https://github.com/smthemex/ComfyUI_PhotoDoodle/blob/main/assets/example_0317.png)
 * if use unet #11G 单体unet模型，没有内置clip和vae的，所以必须要连双clip和选vae，可以不开启mmgp，12G可能会OOM
