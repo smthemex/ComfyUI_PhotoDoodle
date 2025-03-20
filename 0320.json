@@ -1,0 +1,470 @@
+{
+  "last_node_id": 18,
+  "last_link_id": 16,
+  "nodes": [
+    {
+      "id": 12,
+      "type": "PhotoDoodle_Sampler",
+      "pos": [
+        21860,
+        -2450
+      ],
+      "size": [
+        400,
+        284
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL_PhotoDoodle",
+          "link": 10
+        },
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 11
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 12,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            13
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PhotoDoodle_Sampler"
+      },
+      "widgets_values": [
+        "add a halo and wings for the cat by sksmagiceffects",
+        637126446,
+        "randomize",
+        512,
+        512,
+        20,
+        3.5,
+        512
+      ]
+    },
+    {
+      "id": 5,
+      "type": "PhotoDoodle_Loader",
+      "pos": [
+        21480,
+        -2440
+      ],
+      "size": [
+        330.09088134765625,
+        250
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL_PhotoDoodle",
+          "links": [
+            10
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PhotoDoodle_Loader"
+      },
+      "widgets_values": [
+        "flux1-kj-dev-fp8.safetensors",
+        "ae.safetensors",
+        "FLUX\\pretrain.safetensors",
+        "FLUX\\sksedgeeffect.safetensors",
+        "",
+        "nf4",
+        false,
+        false,
+        1
+      ]
+    },
+    {
+      "id": 13,
+      "type": "DualCLIPLoader",
+      "pos": [
+        21500,
+        -2130
+      ],
+      "size": [
+        315,
+        106
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            12
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DualCLIPLoader"
+      },
+      "widgets_values": [
+        "t5xxl_fp8_e4m3fn.safetensors",
+        "clip_l.safetensors",
+        "flux"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "LoadImage",
+      "pos": [
+        21870,
+        -2100
+      ],
+      "size": [
+        315,
+        314
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            11
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "0001.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "SaveImage",
+      "pos": [
+        22400,
+        -2350
+      ],
+      "size": [
+        315,
+        270
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 13
+        }
+      ],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 15,
+      "type": "SaveImage",
+      "pos": [
+        22405,
+        -2345
+      ],
+      "size": [
+        315,
+        270
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 17,
+      "type": "LoadImage",
+      "pos": [
+        22936.6875,
+        -1928.9586181640625
+      ],
+      "size": [
+        315,
+        314
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            15
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "0001.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 14,
+      "type": "PhotoDoodle_Sampler",
+      "pos": [
+        23457.826171875,
+        -2246.97021484375
+      ],
+      "size": [
+        400,
+        284
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL_PhotoDoodle",
+          "link": 14
+        },
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 15
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            16
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PhotoDoodle_Sampler"
+      },
+      "widgets_values": [
+        "add a halo and wings for the cat by sksmagiceffects",
+        637126446,
+        "randomize",
+        512,
+        512,
+        20,
+        3.5,
+        512
+      ]
+    },
+    {
+      "id": 18,
+      "type": "SaveImage",
+      "pos": [
+        24113.779296875,
+        -2019.9727783203125
+      ],
+      "size": [
+        315,
+        58
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 16
+        }
+      ],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 16,
+      "type": "PhotoDoodle_Loader",
+      "pos": [
+        22978.271484375,
+        -2290.26904296875
+      ],
+      "size": [
+        315,
+        250
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL_PhotoDoodle",
+          "links": [
+            14
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PhotoDoodle_Loader"
+      },
+      "widgets_values": [
+        "none",
+        "none",
+        "FLUX\\pretrain.safetensors",
+        "FLUX\\sksedgeeffect.safetensors",
+        "black-forest-labs/FLUX.1-dev",
+        "fp8",
+        false,
+        false,
+        1
+      ]
+    }
+  ],
+  "links": [
+    [
+      10,
+      5,
+      0,
+      12,
+      0,
+      "MODEL_PhotoDoodle"
+    ],
+    [
+      11,
+      7,
+      0,
+      12,
+      1,
+      "IMAGE"
+    ],
+    [
+      12,
+      13,
+      0,
+      12,
+      2,
+      "CLIP"
+    ],
+    [
+      13,
+      12,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      14,
+      16,
+      0,
+      14,
+      0,
+      "MODEL_PhotoDoodle"
+    ],
+    [
+      15,
+      17,
+      0,
+      14,
+      1,
+      "IMAGE"
+    ],
+    [
+      16,
+      14,
+      0,
+      18,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 2,
+      "title": "Group",
+      "bounding": [
+        21390,
+        -2530,
+        1345.6654052734375,
+        763.35546875
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.5255245326969946,
+      "offset": [
+        -21251.596149336623,
+        2849.5732848921043
+      ]
+    }
+  },
+  "version": 0.4
+}
