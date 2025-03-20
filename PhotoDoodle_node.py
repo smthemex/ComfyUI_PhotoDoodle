@@ -6,6 +6,7 @@ import numpy as np
 from safetensors.torch import load_file
 from diffusers import AutoencoderKL,FluxTransformer2DModel
 from diffusers import BitsAndBytesConfig as DiffusersBitsAndBytesConfig
+from transformers import BitsAndBytesConfig as TransformersBitsAndBytesConfig,T5EncoderModel
 from .node_utils import tensor2pil_list, load_images,cleanup
 from .src.pipeline_pe_clone import FluxPipeline
 from .src.pipeline_pe_clone_orgin import FluxPipeline as FluxPipeline_orgin
@@ -27,6 +28,7 @@ class PhotoDoodle_Loader:
 
     @classmethod
     def INPUT_TYPES(s):
+        
         return {
             "required": {
                 "flux_unet": (["none"] + folder_paths.get_filename_list("diffusion_models"),),
@@ -34,7 +36,8 @@ class PhotoDoodle_Loader:
                 "pre_lora": (["none"] + [i for i in folder_paths.get_filename_list("loras") if "pre" in i],),
                 "loras": (["none"] + folder_paths.get_filename_list("loras"),),
                 "flux_repo":("STRING", {"default": "", "multiline": False}),
-                "quantization":(["none","fp8","nf4"],),
+                "quantization":(["none","fp8","nf4",],),
+                "quantize_T5":("BOOLEAN",{"default":False}),
                 "use_mmgp":("BOOLEAN",{"default":False}),
                 "profile_number":([1,2,3,4,5],)
             },
@@ -46,7 +49,7 @@ class PhotoDoodle_Loader:
     CATEGORY = "PhotoDoodle"
 
     
-    def loader_main(self,flux_unet,vae,pre_lora,loras,flux_repo,quantization,use_mmgp,profile_number):
+    def loader_main(self,flux_unet,vae,pre_lora,loras,flux_repo,quantization,quantize_T5,use_mmgp,profile_number):
        
         flux_repo_local=os.path.join(current_node_path, 'src/FLUX.1-dev')   
         print("***********Load model ***********")
@@ -68,35 +71,63 @@ class PhotoDoodle_Loader:
             else:
                 raise ValueError("No model selected")
             if vae != "none":
+                need_clip=True
                 vae_path = folder_paths.get_full_path("vae", vae)
                 vae_config=os.path.join(flux_repo_local, 'vae')
                 ae = AutoencoderKL.from_single_file(vae_path,config=vae_config, torch_dtype=torch.bfloat16)
                 config_file = os.path.join(flux_repo_local,"transformer/config.json")
-                t_state_dict=load_file(flux_transformer_path)
-                unet_config = FluxTransformer2DModel.load_config(config_file)
-                transformer = FluxTransformer2DModel.from_config(unet_config).to(torch.bfloat16)
-                transformer.load_state_dict(t_state_dict, strict=False)
-                del t_state_dict
-                cleanup()
+
+                if quantization=="fp8":
+                    if os.path.splitext(flux_transformer_path)[-1] == ".pt":
+                        transformer = torch.load(flux_transformer_path)
+                        transformer.eval()
+                    else:
+                        transformer = FluxTransformer2DModel.from_single_file(flux_transformer_path, config=config_file,
+                                                                            torch_dtype=torch.bfloat16)
+                else:
+                    t_state_dict=load_file(flux_transformer_path)
+                    unet_config = FluxTransformer2DModel.load_config(config_file)
+                    transformer = FluxTransformer2DModel.from_config(unet_config).to(torch.bfloat16)
+                    transformer.load_state_dict(t_state_dict, strict=False)
+                    del t_state_dict
+                    cleanup()
                 pipeline = FluxPipeline.from_pretrained(
                     flux_repo_local,
                     vae=ae,
                     transformer=transformer,
                     torch_dtype=torch.bfloat16,
-                    )
-                need_clip=True
+                    )     
             else:
                 pipeline = FluxPipeline_orgin.from_single_file(
-                    flux_transformer_path,
-                    config=flux_repo_local,
-                    torch_dtype=torch.bfloat16,
-                    )
+                            flux_transformer_path,
+                            config=flux_repo_local,
+                            torch_dtype=torch.bfloat16,
+                            )
             
         else:
             # flux_repo='F:/test/ComfyUI/models/diffusers/black-forest-labs/FLUX.1-dev'
             if quantization=="none":
-                pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,torch_dtype=torch.bfloat16,)
+                if quantize_T5:
+                    quant_config = TransformersBitsAndBytesConfig(load_in_8bit=True,) # 8bit default
+                    text_encoder_2_8bit = T5EncoderModel.from_pretrained(
+                    flux_repo,
+                    subfolder="text_encoder_2",
+                    quantization_config=quant_config,
+                    torch_dtype=torch.float16,
+                )
+                    pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,text_encoder_2=text_encoder_2_8bit,torch_dtype=torch.bfloat16,)
+                else:
+                    pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,torch_dtype=torch.bfloat16,)
+                    
             else:
+                if quantize_T5:
+                        quant_config = TransformersBitsAndBytesConfig(load_in_8bit=True,) # 8bit 
+                        text_encoder_2_8bit = T5EncoderModel.from_pretrained(
+                        flux_repo,
+                        subfolder="text_encoder_2",
+                        quantization_config=quant_config,
+                        torch_dtype=torch.float16,
+                    )
                 if quantization=="fp8":
                     transformer = FluxTransformer2DModel.from_pretrained(
                         flux_repo,
@@ -104,6 +135,7 @@ class PhotoDoodle_Loader:
                         quantization_config=DiffusersBitsAndBytesConfig(load_in_8bit=True,),
                         torch_dtype=torch.bfloat16,
                     )
+                   
                 else: #nf4
                     transformer = FluxTransformer2DModel.from_pretrained(
                         flux_repo,
@@ -112,7 +144,10 @@ class PhotoDoodle_Loader:
                             load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16
                         ),
                         torch_dtype=torch.bfloat16,)
-                pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,transformer=transformer,torch_dtype=torch.bfloat16,)
+                if quantize_T5:
+                    pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,transformer=transformer,text_encoder_2=text_encoder_2_8bit,torch_dtype=torch.bfloat16,)
+                else: #nf4
+                    pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,transformer=transformer,torch_dtype=torch.bfloat16,)
 
         # Load and fuse base LoRA weights
         print("***********  Load and fuse base LoRA weights ***********")
@@ -147,6 +182,7 @@ class PhotoDoodle_Sampler:
                 "model": ("MODEL_PhotoDoodle",),
                 "images": ("IMAGE",),  
                 "prompt": ("STRING", {"default": "add a halo and wings for the cat by sksmagiceffects", "multiline": True}),
+                 "seed": ("INT", {"default": 0, "min": 0, "max": MAX_SEED, "step": 1, "display": "number"}),
                 "width": ("INT", {"default": 512, "min": 256, "max": 4096, "step": 64, "display": "number"}),
                 "height": ("INT", {"default": 768, "min": 256, "max": 4096, "step": 64, "display": "number"}),
                 "steps": ("INT", {"default": 20, "min": 1, "max": 1024, "step": 1, "display": "number"}),
@@ -161,7 +197,7 @@ class PhotoDoodle_Sampler:
     FUNCTION = "sampler_main"
     CATEGORY = "PhotoDoodle"
 
-    def sampler_main(self, model,images,prompt, width, height,steps,guidance_scale, max_sequence_length,**kwargs):
+    def sampler_main(self, model,images,prompt,seed, width, height,steps,guidance_scale, max_sequence_length,**kwargs):
 
         need_clip=model.get("need_clip")
         pipeline=model.get("pipeline")
@@ -204,6 +240,7 @@ class PhotoDoodle_Sampler:
                 guidance_scale=guidance_scale,
                 num_inference_steps=steps,
                 max_sequence_length=max_sequence_length,
+                generator = torch.Generator(device=device).manual_seed(seed)
             ).images[0]
             pbar.update_absolute(i, total_images)
             img_list.append(result)
