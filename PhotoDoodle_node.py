@@ -113,7 +113,7 @@ class PhotoDoodle_Loader:
                     flux_repo,
                     subfolder="text_encoder_2",
                     quantization_config=quant_config,
-                    torch_dtype=torch.float16,
+                    torch_dtype=torch.bfloat16,
                 )
                     pipeline =FluxPipeline_orgin.from_pretrained(flux_repo,text_encoder_2=text_encoder_2_8bit,torch_dtype=torch.bfloat16,)
                 else:
@@ -126,7 +126,7 @@ class PhotoDoodle_Loader:
                         flux_repo,
                         subfolder="text_encoder_2",
                         quantization_config=quant_config,
-                        torch_dtype=torch.float16,
+                        torch_dtype=torch.bfloat16,
                     )
                 if quantization=="fp8":
                     transformer = FluxTransformer2DModel.from_pretrained(
