@@ -24,7 +24,7 @@ git clone https://github.com/smthemex/ComfyUI_PhotoDoodle
 ```
 # 3 Example
 
-![](https://github.com/smthemex/ComfyUI_PhotoDoodle/blob/main/assets/example_workflows.png)
+![](https://github.com/smthemex/ComfyUI_PhotoDoodle/blob/main/example_workflows/example.png)
 
 
 # 4 Citation
